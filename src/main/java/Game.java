@@ -7,12 +7,44 @@ import java.awt.event.KeyListener;
 
 class Game extends JFrame {
 
-    private static final long serialVersionUID = -2542001418764869760L;
-    private static int width = 20;
-    private static int height = 20;
+    private static int width = 20; // board width in pixels
+    private static int height = 20; // board height in pixels
     private Snake snake;
-    private boolean moveLock;
-    private final int len = 5;
+    private final int len = 5; // initial length of the snake
+    private boolean moveLock; // locks the movement after a key press so the player can't turn on the spot
+    private final Thread t = new Thread(() -> {
+        getContentPane().setLayout(new GridLayout(height, width, 0, 0));
+
+        int highscore = 0;
+        snake = new Snake(width, height, len, Direction.RIGHT);
+
+        // Creates the array that'll contain the threads
+        PixelType[][] grid = snake.pixels();
+
+
+        // Start & pauses all threads, then adds every square of each thread to the panel
+        for (int i = height - 1; i >= 0; i--) {
+            for (int j = 0; j < width; j++) {
+                getContentPane().add(new SquarePanel(grid[i][j].color));
+            }
+        }
+        System.out.println("Starting...");
+        while (isEnabled()) {
+            sleep(1000);
+
+            if (snake.length - len > highscore) highscore = snake.length - len;
+            snake = new Snake(width, height, len, Direction.RIGHT);
+
+            while (snake.move()) {
+                moveLock = false;
+                setTitle("Score: " + (snake.length - len) + ", Highscore: " + highscore);
+
+                updateBoard();
+
+                sleep(100);
+            }
+        }
+    });
 
     public Game() {
         KeyListener kl = new KeyListener() {
@@ -57,44 +89,11 @@ class Game extends JFrame {
 
             }
         };
+
         addKeyListener(kl);
 
         t.start();
     }
-
-    private Thread t = new Thread(() -> {
-        getContentPane().setLayout(new GridLayout(height, width, 0, 0));
-
-        int highscore = 0;
-        snake = new Snake(width, height, len, Direction.RIGHT);
-
-        // Creates the array that'll contain the threads
-        PixelType[][] grid = snake.pixels();
-
-
-        // Start & pauses all threads, then adds every square of each thread to the panel
-        for (int i = height - 1; i >= 0; i--) {
-            for (int j = 0; j < width; j++) {
-                getContentPane().add(new SquarePanel(grid[i][j].color));
-            }
-        }
-        System.out.println("Starting...");
-        while (isEnabled()) {
-            sleep(1000);
-
-            if (snake.length - len > highscore) highscore = snake.length - len;
-            snake = new Snake(width, height, len, Direction.RIGHT);
-
-            while (snake.move()) {
-                moveLock = false;
-                setTitle("Score: " + (snake.length - len) + ", Highscore: " + highscore);
-
-                updateBoard();
-
-                sleep(100);
-            }
-        }
-    });
 
     private void sleep(int millis) {
         try {

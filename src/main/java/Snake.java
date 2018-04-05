@@ -1,9 +1,9 @@
+import java.util.Arrays;
 import java.util.Random;
 
 public class Snake {
 
     private class Segment {
-
         int x;
         int y;
         Segment next;
@@ -20,13 +20,14 @@ public class Snake {
 
     private final int width;
     private final int height;
-    private int length;
+    public int length;
     private Segment head;
     private Segment tail;
     private Direction heading;
     private static final Random foodRandom = new Random();
     private int foodx;
     private int foody;
+    private int moveCount;
 
     public Snake(int width, int height, int length, Direction heading) {
         this.width = width;
@@ -35,7 +36,7 @@ public class Snake {
         this.heading = heading;
         this.head = new Segment(length, 0, null, null);
         Segment n = head;
-        for (int i = 0; i < length; i++) {
+        for (int i = 1; i < length; i++) {
             n.next = new Segment(length - i, 0, null, n);
             n = n.next;
         }
@@ -43,9 +44,47 @@ public class Snake {
         placeFood();
     }
 
+    public static void main(String[] args) {
+        Snake s = new Snake(20, 20, 5, Direction.RIGHT);
+        s.debug();
+    }
+
     private void placeFood() {
-        this.foodx = foodRandom.nextInt(width);
-        this.foody = foodRandom.nextInt(height);
+        /*
+        First picks a square from the board left to right, bottom to top,
+        excluding the last length squares.
+          */
+        int f = foodRandom.nextInt(width * height - length);
+
+        f = adjustedF(f, head, null); // adjust f to not be in snake
+
+        this.foodx = f % width;
+        this.foody = f / width;
+    }
+
+    private int adjustedF(int f, Segment from, Segment to) {
+        int c = 0;
+        // first check all snake segments (efficient)
+        for (Segment n = from; n != to; n = n.next) {
+            if (n.y * width + n.x <= f) {
+                c++;
+            }
+        }
+        // then check all potential snake segments between f and f+c (slower)
+        for (int i = f + 1; i <= f + c; i++) {
+            int x = i % width;
+            int y = i / width;
+            if (isSnake(x, y)) c++;
+        }
+        return f + c;
+    }
+
+    // Checks if a coordinate is part of the snake
+    private boolean isSnake(int x, int y) {
+        for (Segment n = head; n != null; n = n.next) {
+            if (x == n.x && y == n.y) return true;
+        }
+        return false;
     }
 
     /**
@@ -73,6 +112,8 @@ public class Snake {
                 dx = 1;
                 dy = 0;
                 break;
+            case NONE:
+                return true;
         }
         boolean isKill = false;
         if (head.x + dx >= width || head.y + dy >= height || head.x + dx < 0 || head.y + dy < 0) {
@@ -95,29 +136,24 @@ public class Snake {
             placeFood();
             tail = tail.next;
         }
+        if (!isKill) moveCount++;
+        int c = 0;
+        for (Segment a = head; a != null; a = a.next) {
+            c++;
+        }
+        if (c != length) System.out.println("Error: " + c + ", " + length);
         return !isKill;
     }
 
+    /**
+     * Changes the direction the snake is heading
+     *
+     * @param direction the new direction
+     */
     public void setDirection(Direction direction) {
         if (direction != this.heading.opposite()) {
             this.heading = direction;
         }
-    }
-
-    public PixelType[][] pixels() {
-        PixelType[][] out = new PixelType[height][width];
-        for (int i = 0; i < out.length; i++) {
-            for (int j = 0; j < out[i].length; j++) {
-                out[j][i] = PixelType.EMPTY;
-            }
-        }
-        out[foody][foodx] = PixelType.FOOD;
-        Segment n = head;
-        while (n != null) {
-            out[n.y][n.x] = PixelType.SNAKE;
-            n = n.next;
-        }
-        return out;
     }
 
     @Override
@@ -142,13 +178,34 @@ public class Snake {
         return out.toString();
     }
 
-    public static void main(String[] args) throws InterruptedException {
-        Snake s = new Snake(10, 10, 5, Direction.RIGHT);
-        s.pixels();
-        do {
-            System.out.print("\r\r\r\r\r\r\r\r\r\r");
-            System.out.print(s);
-            Thread.sleep(500);
-        } while (s.move());
+    /**
+     * Returns an array of pixels containing the game information
+     *
+     * @return an array of pixels for the game
+     */
+    public PixelType[][] pixels() {
+        PixelType[][] out = new PixelType[height][width];
+        for (int i = 0; i < out.length; i++) {
+            for (int j = 0; j < out[i].length; j++) {
+                out[j][i] = PixelType.EMPTY;
+            }
+        }
+        out[foody][foodx] = PixelType.FOOD;
+        out[head.y][head.x] = PixelType.HEAD;
+        Segment n = head.next;
+        while (n != null) {
+            out[n.y][n.x] = PixelType.SNAKE;
+            n = n.next;
+        }
+        return out;
+    }
+
+    void debug() {
+        int[][] c = new int[height][width];
+        for (int i = 0; i < 10000000; i++) {
+            placeFood();
+            c[foody][foodx]++;
+        }
+        System.out.println(Arrays.deepToString(c));
     }
 }

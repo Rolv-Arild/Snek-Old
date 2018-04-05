@@ -1,5 +1,5 @@
 public enum Direction {
-    UP, DOWN, LEFT, RIGHT;
+    UP, DOWN, LEFT, RIGHT, NONE;
 
     public Direction opposite() {
         switch (this) {
@@ -11,6 +11,8 @@ public enum Direction {
                 return RIGHT;
             case RIGHT:
                 return LEFT;
+            case NONE:
+                return NONE;
         }
         throw new IllegalStateException();
     }

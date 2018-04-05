@@ -12,55 +12,9 @@ class Game extends JFrame {
     private static int height = 20;
     private Snake snake;
     private boolean moveLock;
+    private final int len = 5;
 
     public Game() {
-
-        int len = 5;
-
-        Thread t = new Thread(() -> {
-            getContentPane().setLayout(new GridLayout(height, width, 0, 0));
-
-            snake = new Snake(width, height, len, Direction.RIGHT);
-
-            // Creates the array that'll contain the threads
-            PixelType[][] grid = snake.pixels();
-
-
-            // Start & pauses all threads, then adds every square of each thread to the panel
-            for (int i = height - 1; i >= 0; i--) {
-                for (int j = 0; j < width; j++) {
-                    getContentPane().add(new SquarePanel(grid[i][j].color));
-                }
-            }
-            while (true) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                snake = new Snake(width, height, len, Direction.RIGHT);
-                int[][] info2 = snake.info();
-
-                while (snake.move()) {
-                    moveLock = false;
-                    setTitle("Score: " + (snake.length - len));
-                    // Creates the array that'll contain the threads
-                    int[][] info1 = snake.info();
-
-                    updateBoard(info1, info2);
-
-                    validate();
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    info2 = snake.info();
-                }
-            }
-        });
-
         KeyListener kl = new KeyListener() {
             @Override
             public void keyTyped(KeyEvent e) {
@@ -103,44 +57,66 @@ class Game extends JFrame {
 
             }
         };
-
         addKeyListener(kl);
 
         t.start();
     }
 
-    private void updateBoard(int[][] info1, int[][] info2) {
-        for (int i = 0; i < info2.length; i++) {
-            if (info1[i][0] != info2[i][0] || info1[i][1] != info2[i][1]) {
-                int x = info1[i][0];
-                int y = info1[i][1];
-                SquarePanel sp2 = (SquarePanel) getContentPane().getComponent((height - info2[i][1] - 1) * width + info2[i][0]);
-                sp2.ChangeColor(PixelType.EMPTY.color); // reset the old color
-                SquarePanel sp1 = (SquarePanel) getContentPane().getComponent((height - y - 1) * width + x);
-                changeColor(i, sp1);
-                i++;
+    private Thread t = new Thread(() -> {
+        getContentPane().setLayout(new GridLayout(height, width, 0, 0));
+
+        int highscore = 0;
+        snake = new Snake(width, height, len, Direction.RIGHT);
+
+        // Creates the array that'll contain the threads
+        PixelType[][] grid = snake.pixels();
+
+
+        // Start & pauses all threads, then adds every square of each thread to the panel
+        for (int i = height - 1; i >= 0; i--) {
+            for (int j = 0; j < width; j++) {
+                getContentPane().add(new SquarePanel(grid[i][j].color));
             }
         }
-        if (info1.length != info2.length) {
-            int x = info1[info1.length - 1][0];
-            int y = info1[info1.length - 1][0];
-            SquarePanel sp1 = (SquarePanel) getContentPane().getComponent((height - y - 1) * width + x);
-            changeColor(info1.length - 1, sp1);
+        System.out.println("Starting...");
+        while (isEnabled()) {
+            sleep(1000);
+
+            if (snake.length - len > highscore) highscore = snake.length - len;
+            snake = new Snake(width, height, len, Direction.RIGHT);
+
+            while (snake.move()) {
+                moveLock = false;
+                setTitle("Score: " + (snake.length - len) + ", Highscore: " + highscore);
+
+                updateBoard();
+
+                sleep(100);
+            }
+        }
+    });
+
+    private void sleep(int millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
-    private void changeColor(int i, SquarePanel sp1) {
-        switch (i) {
-            case 0:  // food
-                sp1.ChangeColor(PixelType.FOOD.color);
-                break;
-            case 1:  // head
-                sp1.ChangeColor(PixelType.HEAD.color);
-                break;
-            default: // body
-                sp1.ChangeColor(PixelType.SNAKE.color);
-                break;
+    private void updateBoard() {
+        PixelType[][] grid = snake.pixels();
+
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                SquarePanel sp = (SquarePanel) getContentPane().getComponent((height - i - 1) * width + j);
+                if (!sp.getBackground().equals(grid[i][j].color)) {
+                    sp.changeColor(grid[i][j].color);
+                }
+            }
         }
+
+        validate();
     }
 }
 

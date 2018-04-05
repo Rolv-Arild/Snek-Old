@@ -178,6 +178,19 @@ public class Snake {
         return out.toString();
     }
 
+    public int[][] info() {
+        int[][] out = new int[length + 1][2];
+        out[0][0] = foodx;
+        out[0][1] = foody;
+        int i = 1;
+        for (Segment n = head; n != null; n = n.next) {
+            out[i][0] = n.x;
+            out[i][1] = n.y;
+            i++;
+        }
+        return out;
+    }
+
     /**
      * Returns an array of pixels containing the game information
      *
@@ -187,7 +200,7 @@ public class Snake {
         PixelType[][] out = new PixelType[height][width];
         for (int i = 0; i < out.length; i++) {
             for (int j = 0; j < out[i].length; j++) {
-                out[j][i] = PixelType.EMPTY;
+                out[i][j] = PixelType.EMPTY;
             }
         }
         out[foody][foodx] = PixelType.FOOD;

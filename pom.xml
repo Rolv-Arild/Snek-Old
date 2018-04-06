@@ -20,5 +20,12 @@
         </plugins>
     </build>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.tensorflow</groupId>
+            <artifactId>tensorflow</artifactId>
+            <version>1.6.0</version>
+        </dependency>
+    </dependencies>
 
 </project>

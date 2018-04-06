@@ -1,3 +1,5 @@
+package snek;
+
 import java.util.Arrays;
 import java.util.Random;
 
@@ -213,7 +215,7 @@ public class Snake {
         return out;
     }
 
-    void debug() {
+    public void debug() {
         int[][] c = new int[height][width];
         for (int i = 0; i < 10000000; i++) {
             placeFood();
